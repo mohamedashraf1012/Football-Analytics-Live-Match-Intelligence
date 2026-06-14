@@ -163,7 +163,7 @@ PySpark reads from S3 Bronze, cleans and transforms every table, then writes cle
 
 #### 🔹 Stage 1 — Data Exploration
 
-Before writing any cleaning logic, `explore_table.py` profiles each of the 12 tables — row counts, schema, null counts per column, and sample rows — to identify exactly what needs to be cleaned.
+Before writing any cleaning logic, explore each of the 12 tables — row counts, schema, null counts per column, and sample rows — to identify exactly what needs to be cleaned.
 <img width="1406" height="619" alt="exploration" src="https://github.com/user-attachments/assets/7cc7ad12-8bfe-4152-bada-92955fe271a6" />
 
 #### 🔹 Stage 2 — Cleaning Operations
