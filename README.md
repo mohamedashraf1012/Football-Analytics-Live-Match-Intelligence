@@ -17,12 +17,10 @@
       <img width="60" height="60" alt="amazon-s3-svgrepo-com" src="https://github.com/user-attachments/assets/a406d595-7cf3-4d38-b5fe-9f2f778bb8e7" /><br/>
       <sub><b>AWS S3</b></sub>
     </td>
-    <td align="center" width="30"></td>
     <td align="center">
       <img width="60" height="60" alt="snowflake-data-cloud-icon" src="https://github.com/user-attachments/assets/fee697ae-fba9-4d21-b9b8-4a60f45cafe9" /><br/>
       <sub><b>Snowflake</b></sub>
     </td>
-    <td align="center" width="30"></td>
     <td align="center">
        <img width="60" height="60" alt="dbt-icon" src="https://github.com/user-attachments/assets/f1cebf7e-3f51-4165-87eb-c5616c332ce2" /><br/>
       <sub><b>dbt</b></sub>
@@ -31,12 +29,10 @@
   <sub><b>Kafka</b></sub>
 </td>
     </td>
-    <td align="center" width="30"></td>
     <td align="center">
       <img width="60" height="60" alt="Microsoft-Power-Bi--Streamline-Svg-Logos" src="https://github.com/user-attachments/assets/bb34e1a7-949b-4183-ad0e-66b034b6e75f" /><br/>
       <sub><b>Power BI</b></sub>
     </td>
-    <td align="center" width="30"></td>
     <td align="center">
   <img width="60" height="60" alt="grafana-icon" src="https://github.com/user-attachments/assets/51943e84-3778-4de3-bbc8-ed7d557d1083" /><br/>
   <sub><b>Grafana</b></sub>
