@@ -297,7 +297,7 @@ Three interactive dashboards connected live to Snowflake MARTS:
     <td align="center"><b>⚽ Player Performance</b></td>
   </tr>
   <tr>
-    <td><img src="docs/screenshots/player_dashboard.png"/></td>
+    <td><img src="dashboards/PLAYERS.JPG"/></td>
   </tr>
   <tr>
     <td>27K players tracked · 170K goals · 134K assists · 261K yellow cards · €287.7bn total market value · Top scorers, assisters, and most valuable players · Nationality distribution</td>
@@ -309,7 +309,7 @@ Three interactive dashboards connected live to Snowflake MARTS:
     <td align="center"><b>🏟️ Club Analytics</b></td>
   </tr>
   <tr>
-    <td><img src="docs/screenshots/club_dashboard.png"/></td>
+    <td><img src="dashboards/CLUBS.JPG"/></td>
   </tr>
   <tr>
     <td>793 clubs tracked · 150K+ total matches · Win/loss rates per club · Squad profile summary · Top spending clubs · Goals scored vs conceded</td>
@@ -321,7 +321,7 @@ Three interactive dashboards connected live to Snowflake MARTS:
     <td align="center"><b>💶 Transfer Analysis</b></td>
   </tr>
   <tr>
-    <td><img src="docs/screenshots/transfer_dashboard.png"/></td>
+    <td><img src="dashboards/TRANSFERS.JPG"/></td>
   </tr>
   <tr>
     <td>47K+ total transfers · €75.73bn total spend · €222M biggest deal (Neymar) · Top net profit/loss clubs · Transfer volume by season · Spending breakdown by league</td>
@@ -334,7 +334,7 @@ Live match event stream dashboard powered by InfluxDB. Displays goal timelines, 
 
 <div align="center">
 
-![Grafana Dashboard](docs/screenshots/grafana_dashboard.png)
+<img width="969" height="487" alt="Grafana Live Dashboard" src="https://github.com/user-attachments/assets/1be3ca66-8ea6-42e0-b601-f4443990d998" />
 
 </div>
 
