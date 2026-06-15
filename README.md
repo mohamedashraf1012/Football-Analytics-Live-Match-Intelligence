@@ -200,7 +200,7 @@ different grains sharing a set of conformed dimension tables.
 Snowflake
 ├── RAW schema         ← COPY INTO from S3 silver
 ├── STAGING schema     ← dbt stg_* models (rename, cast, add loaded_at)
-├── MARTS schema       ← dbt dim_, fact_, mart_* models (Galaxy Schema)
+├── ANALYTICS schema       ← dbt dim_, fact_, mart_* models (Galaxy Schema)
 │   ├── Dimensions: dim_player, dim_club, dim_competition, dim_date
 │   ├── Facts:      fact_appearances, fact_matches, fact_transfers,
 │   │               fact_player_valuations, fact_game_events
