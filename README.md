@@ -501,13 +501,13 @@ FootballFlow/
 ├── 📂 batch/
 │   │
 │   ├── 📂 bronze/
-│   │   ├── verify_bronze.py          # Verify all 12 CSV files exist in S3
+│   │   └── verify_bronze.py         
 │   │
 │   ├── 📂 silver/
 │   │   ├── 📂 cleaning/
 │   │   ├── 📂 exploration/
-│   │   ├── spark_session.py          # Shared Spark + S3 session factory
-│   │   ├── run_all_silver.py         # Single-session pipeline runner
+│   │   ├── spark_session.py         
+│   │   └── run_all_silver.py         
 │   │
 │   └── 📂 gold/
 │       ├── dbt_project.yml
@@ -517,31 +517,24 @@ FootballFlow/
 │       │   ├── 📂 dimensions/
 │       │   ├── 📂 facts/
 │       │   └── 📂 marts/
-│       ├── 📂 snapshots/
+│       └── 📂 snapshots/
 │
 ├── 📂 streaming/
 │   ├── 📂 producer/
-│   │   └── match_event_producer.py   # Kafka producer — replays game_events.csv
+│   │   └── match_event_producer.py   
 │   ├── 📂 consumer/
-│   │   └── spark_streaming_consumer.py  # Spark Structured Streaming consumer
-│   ├── docker-compose.yml            # Kafka + Zookeeper
-│   └── README.md
+│   │   └── spark_streaming_consumer.py  
+│   └── docker-compose.yml           
 │
 ├── 📂 airflow/
 │   ├── 📂 dags/
-│   │   └── footballflow_batch_dag.py # Main batch pipeline DAG
-│   ├── docker-compose.yml            # Airflow with LocalExecutor
-│   └── README.md
+│   │   └── footballflow_batch_dag.py    
+│   └── docker-compose.yml
 │
 ├── 📂 dashboards/
-│   ├── 📂 powerbi/
-│   │   └── FootballFlow.pbix         # Power BI report file
-│   └── 📂 grafana/
-│       └── match_events_dashboard.json  # Grafana dashboard export
 │
 ├── 📂 docs/
-│
-├── config.py.example             # AWS + Snowflake config template                
+│      
 └── README.md
 ```
 
