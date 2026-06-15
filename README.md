@@ -254,42 +254,65 @@ dbt test                         # data quality tests
 
 ---
 
-### 4️⃣ Streaming Pipeline — Kafka + Spark + InfluxDB + Grafana
 
-The streaming pipeline runs **fully independently** from the batch pipeline. A Python script replays rows from `game_events.csv` to simulate a live football match broadcast.
+### 4️⃣ Streaming Pipeline — Kafka + Spark + InfluxDB + Grafana (+ Snowflake)
+
+The streaming pipeline runs as the **speed layer** of a Lambda Architecture,
+alongside the batch pipeline. A Python script replays rows from
+`game_events.csv` to simulate a live football match broadcast, and the
+resulting time-series metrics are later synced into Snowflake so they can be
+combined with historical (batch) data for analysis.
 
 ```
-Python Simulator  ──►  Kafka (match_events topic)
-                           │
-                    Spark Structured Streaming
-                    (windowed aggregations)
-                           │
-                       InfluxDB
-                    (time-series storage)
-                           │
-                        Grafana
-                    (live dashboards + alerts)
+Python Simulator
+      │
+      ▼
+Kafka (match_events topic)
+      │
+      ▼
+Spark Structured Streaming
+(proccessing, enriching,validation)
+      │
+      ▼
+InfluxDB
+(time-series storage)
+      │
+      ├─────────────────────────┐
+      ▼                          ▼
+  Grafana                  Copy job → Snowflake
+(live dashboards & alerts)   RAW.STREAMING schema
+← speed layer output                │
+                                     ▼
+                          dbt fact_game_events
+                          (source_type = 'stream')
+                                     │
+                                     ▼
+                          mart_match_events_live
 ```
 
 **Start the streaming pipeline:**
-
 ```bash
 cd streaming/
-
 # 1. Start Kafka
 docker-compose up -d
-
 # 2. Start the Spark consumer (in one terminal)
 python consumer/spark_streaming_consumer.py
-
 # 3. Start the match event producer (in another terminal)
 python producer/match_event_producer.py
+# 4. Sync InfluxDB → Snowflake (periodic job)
+python sync/influxdb_to_snowflake.py
 ```
 
 **Events streamed:** `goals` · `cards` · `substitutions` · `shootout`
 
-> The streaming pipeline writes to InfluxDB and is visualised in Grafana. It does **not** write to Snowflake — the two pipelines are fully isolated.
-
+> **Lambda Architecture in practice:** Grafana reads directly from InfluxDB
+> for low-latency, real-time dashboards. In parallel, a sync job copies the
+> same streamed events from InfluxDB into Snowflake's RAW/STREAMING schema.
+> The `fact_game_events` model (Gold layer) is materialized incrementally and
+> unions both the batch-loaded events (`source_type = 'batch'`) and the synced
+> streaming events (`source_type = 'stream'`), so `mart_match_events_live` in
+> Power BI reflects both historical and live match data.
+> 
 ---
 
 ### 5️⃣ Orchestration — Apache Airflow
