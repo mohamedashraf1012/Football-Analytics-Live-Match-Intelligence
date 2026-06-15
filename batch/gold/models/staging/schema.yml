@@ -1,0 +1,194 @@
+version: 2
+
+# ─────────────────────────────────────────────
+# SOURCES — registers RAW Snowflake tables
+# staging models reference these via 
+# ─────────────────────────────────────────────
+# sources:
+#   - name: FOOTBALL_DE         
+#     database: FOOTBALL_DE
+#     schema: RAW
+#     description: "Raw data loaded from spark parquet files via COPY INTO"
+#     tables:
+#       - name: RAW_APPEARANCES
+#       - name: RAW_CLUBS
+#       - name: RAW_COMPETITIONS
+#       - name: RAW_GAMES
+#       - name: RAW_GAME_EVENTS
+#       - name: RAW_PLAYERS
+#       - name: RAW_PLAYER_VALUATIONS
+#       - name: RAW_TRANSFERS
+sources:
+  - name: FOOTBALL_DE
+    database: FOOTBALL_DE # اسم الـ database في Snowflake
+    schema: RAW
+    description: "Raw data loaded from spark parquet files via COPY INTO"
+    tables:
+      - name: RAW_APPEARANCES
+        description: "One row per player per match"
+      - name: RAW_CLUBS
+        description: "Club information"
+      - name: RAW_COMPETITIONS
+        description: "Competition information"
+      - name: RAW_GAMES
+        description: "Game information, one row per match"
+      - name: RAW_GAME_EVENTS
+        description: "Tag ID to tag name mapping"
+      - name: RAW_PLAYERS
+        description: "Player information"
+      - name: RAW_PLAYER_VALUATIONS
+        description: "Player valuation information"
+      - name: RAW_TRANSFERS
+        description: "Transfer information, one row per transfer transaction"
+
+
+
+
+# sources:
+#   - name: raw
+#     database: FOOTBALL_DE
+#     schema: RAW
+#     description: "Raw tables loaded from Silver Parquet files via COPY INTO"
+#     tables:
+#       - name: raw_players
+#         description: "Player master data"
+#         columns:
+#           - name: player_id
+#             tests: [unique, not_null]
+
+#       - name: raw_clubs
+#         description: "Club master data"
+#         columns:
+#           - name: club_id
+#             tests: [unique, not_null]
+
+#       - name: raw_competitions
+#         description: "Competition master data"
+#         columns:
+#           - name: competition_id
+#             tests: [unique, not_null]
+
+#       - name: raw_games
+#         description: "One row per match"
+#         columns:
+#           - name: game_id
+#             tests: [unique, not_null]
+
+#       - name: raw_appearances
+#         description: "One row per player per match"
+#         columns:
+#           - name: appearance_id
+#             tests: [unique, not_null]
+
+#       - name: raw_game_events
+#         description: "Match events — batch loaded; streaming appended separately"
+#         columns:
+#           - name: game_event_id
+#             tests: [unique, not_null]
+
+#       - name: raw_player_valuations
+#         description: "Full historical market value records per player"
+#         columns:
+#           - name: player_id
+#             tests: [not_null]
+
+#       - name: raw_transfers
+#         description: "Transfer transactions"
+#         columns:
+#           - name: player_id
+#             tests: [not_null]
+
+# ─────────────────────────────────────────────
+# STAGING MODELS
+# ─────────────────────────────────────────────
+models:
+  - name: stg_players
+    description: "Cleaned and renamed player records from raw_players"
+    columns:
+      - name: player_id
+        tests: [unique, not_null]
+
+  - name: stg_clubs
+    description: "Cleaned and renamed club records from raw_clubs"
+    columns:
+      - name: club_id
+        tests: [unique, not_null]
+
+  - name: stg_competitions
+    description: "Cleaned and renamed competition records from raw_competitions"
+    columns:
+      - name: competition_id
+        tests: [unique, not_null]
+
+  - name: stg_games
+    description: "One row per match from raw_games. Home/away split happens in fact_matches."
+    columns:
+      - name: game_id
+        tests: [unique, not_null]
+      - name: home_club_id
+        tests:
+          - not_null:
+              config:
+                severity: warn
+      - name: away_club_id
+        tests:
+          - not_null:
+              config:
+                severity: warn
+
+  - name: stg_appearances
+    description: "One row per player per match from raw_appearances"
+    columns:
+      - name: appearance_id
+        tests: [unique, not_null]
+      - name: player_id
+        tests:
+          - not_null:
+              config:
+                severity: warn
+      - name: game_id
+        tests:
+          - not_null:
+              config:
+                severity: warn
+
+  - name: stg_game_events
+    description: "Match events. source_type distinguishes batch vs stream rows."
+    columns:
+      - name: game_event_id
+        tests: [unique, not_null]
+      - name: source_type
+        # tests:
+        #   - accepted_values:
+        #       values: ['batch', 'stream']
+
+  - name: stg_player_valuations
+    description: "Full historical market value records. All rows preserved — not deduplicated."
+    columns:
+      - name: player_id
+        tests:
+          - not_null:
+              config:
+                severity: warn
+      - name: valuation_date
+        tests:
+          - not_null:
+              config:
+                severity: warn
+      - name: market_value_in_eur
+        tests:
+          - not_null:
+              config:
+                severity: warn
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+
+  - name: stg_transfers
+    description: "Transfer transactions from raw_transfers"
+    columns:
+      - name: player_id
+        tests:
+          - not_null:
+              config:
+                severity: warn

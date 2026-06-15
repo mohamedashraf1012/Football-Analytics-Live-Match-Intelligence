@@ -1,0 +1,82 @@
+version: 2
+
+models:
+  - name: mart_player_performance
+    description: "Aggregated player stats per season and club. Powers the Player Performance dashboard in Power BI."
+    columns:
+      - name: player_full_name
+        tests:
+          - not_null:
+              config:
+                severity: warn
+      - name: total_goals
+        tests:
+          - not_null:
+              config:
+                severity: warn
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+      - name: total_appearances
+        tests:
+          - not_null:
+              config:
+                severity: warn
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+
+  - name: mart_club_transfer_spending
+    description: "Transfer spend and income per club per season."
+    columns:
+      - name: buying_club                        # ✅ الاسم الفعلي
+        tests:
+          - not_null:
+              config:
+                severity: warn
+      - name: total_spent_that_season            # ✅ الاسم الفعلي
+        tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+      - name: total_received_that_season         # ✅ الاسم الفعلي
+        tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+
+  - name: mart_club_match_stats
+    description: "Club win/loss/draw rates aggregated by season, competition, and home/away. Powers the Club Performance dashboard."
+    columns:
+      - name: club_name
+        tests:
+          - not_null:
+              config:
+                severity: warn
+      - name: win_rate_pct
+        tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+                max_value: 100
+      - name: total_matches
+        tests:
+          - not_null:
+              config:
+                severity: warn
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+
+  # - name: mart_match_events_live
+  #   description: "Match events enriched with club info for live and historical event dashboards."
+  #   columns:
+      # - name: event_type
+      #   tests:
+      #     - not_null
+      #     - accepted_values:
+      #         values: ['goals', 'cards', 'substitutions', 'shootout']
+      # - name: source_type
+      #   tests:
+      #     - accepted_values:
+      #         values: ['batch', 'stream']

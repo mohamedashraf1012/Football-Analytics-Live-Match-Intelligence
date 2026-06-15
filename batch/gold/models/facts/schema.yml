@@ -1,0 +1,214 @@
+version: 2
+
+models:
+  - name: fact_appearances
+    description: "Grain: one player appearance per match. Source: raw_appearances."
+    columns:
+      - name: appearance_id
+        tests: [unique, not_null]
+      - name: sk_player
+        tests:
+          - not_null:
+              config:
+                severity: warn
+          - relationships:
+              arguments:
+                to: ref('dim_player')
+                field: sk_player
+      - name: sk_club
+        tests:
+          - not_null:
+              config:
+                severity: warn
+          - relationships:
+              arguments:
+                to: ref('dim_club')
+                field: sk_club
+      - name: sk_competition
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_competitions')
+                field: sk_competition
+      - name: sk_date
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_date')
+                field: sk_date
+      - name: goals
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+              # max_value: 20
+      # - name: minutes_played
+      #   tests:
+      #     - dbt_utils.accepted_range:
+      #         min_value: 1
+      #         max_value: 135
+
+  - name: fact_matches
+    description: "Grain: one football match. Source: raw_games. Home/away win flags and goal metrics computed here."
+    columns:
+      - name: game_id
+        tests: [unique, not_null]
+      - name: home_club_key
+        tests:
+          - not_null:
+              config:
+                severity: warn
+          - relationships:
+              arguments:
+                to: ref('dim_club')
+                field: sk_club
+      - name: away_club_key
+        tests:
+          - not_null:
+              config:
+                severity: warn
+          - relationships:
+              arguments:
+                to: ref('dim_club')
+                field: sk_club
+      - name: competition_key
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_competitions')
+                field: sk_competition
+      - name: date_key
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_date')
+                field: sk_date
+      # - name: home_goals
+      #   tests:
+      #     - not_null
+      #     - dbt_utils.accepted_range:
+      #         min_value: 0
+      #         max_value: 30
+      # - name: away_goals
+      #   tests:
+      #     - not_null
+      #     - dbt_utils.accepted_range:
+      #         min_value: 0
+      #         max_value: 30
+
+  - name: fact_transfers
+    description: "Grain: one transfer transaction per player. Source: raw_transfers."
+    columns:
+      - name: sk_player
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_player')
+                field: sk_player
+      - name: sk_from_club
+        tests:
+          - not_null:
+              config:
+                severity: warn
+          - relationships:
+              arguments:
+                to: ref('dim_club')
+                field: sk_club
+      - name: sk_to_club
+        tests:
+          - not_null:
+              config:
+                severity: warn
+          - relationships:
+              arguments:
+                to: ref('dim_club')
+                field: sk_club
+      - name: sk_date
+        tests:
+          - not_null:
+              config:
+                severity: warn
+          - relationships:
+              arguments:
+                to: ref('dim_date')
+                field: sk_date
+      # - name: transfer_fee_eur
+      #   tests:
+      #     - not_null
+      #     - dbt_utils.accepted_range:
+      #         min_value: 0
+
+  - name: fact_player_valuations
+    description: "Grain: one market value record per player per date. Full historical time-series. Source: raw_player_valuations."
+    columns:
+      - name: sk_player
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_player')
+                field: sk_player
+      - name: sk_club
+        tests:
+          - not_null:
+              config:
+                severity: warn
+          - relationships:
+              arguments:
+                to: ref('dim_club')
+                field: sk_club
+      - name: sk_date
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_date')
+                field: sk_date
+      # - name: market_value_eur
+      #   tests:
+      #     - not_null
+      #     - dbt_utils.accepted_range:
+      #         min_value: 0
+      # - name: is_latest_valuation
+      #   tests:
+      #     - accepted_values:
+      #         values: [true, false]
+
+  - name: fact_game_events
+    description: "Grain: one match event. Streaming-isolated — source_type distinguishes batch vs stream rows."
+    columns:
+      - name: game_event_id
+        tests: [unique, not_null]
+      - name: sk_club
+        tests:
+          - not_null:
+              config:
+                severity: warn
+          - relationships:
+              arguments:
+                to: ref('dim_club')
+                field: sk_club
+      - name: sk_date
+        tests:
+          - not_null:
+              config:
+                severity: warn
+          - relationships:
+              arguments:
+                to: ref('dim_date')
+                field: sk_date
+      # - name: event_type
+      #   tests:
+      #     - accepted_values:
+      #         values: ['goals', 'cards', 'substitutions', 'shootout']
+      # - name: source_type
+      #   tests:
+      #     - not_null
+      #     - accepted_values:
+      #         values: ['batch', 'stream']
