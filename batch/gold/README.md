@@ -5,7 +5,7 @@ Welcome to the core data warehousing and business intelligence modeling layer of
 
 As shown in our repository architecture, this folder contains the standard structure of a professional dbt Core engineering environment:  
 Plaintext
-
+```text
 batch/gold/
 ├── 📂 analyses/          # Ad-hoc analytical SQL queries
 ├── 📂 macros/            # Reusable SQL functions (generic testing, date utilities)
@@ -21,17 +21,17 @@ batch/gold/
 ├── dbt_project.yml       # Main dbt project configuration file
 ├── packages.yml          # External dbt package dependencies (dbt_utils)
 └── requirements.txt      # Python dependencies for the gold environment
-
+```
 # ❄️ Snowflake Data Warehouse Architecture
 
 Data moves through four distinct, isolated schemas inside the FOOTBALL_DE Snowflake database to maintain strict governance and separation of concerns:  
-
+```text
 Snowflake (FOOTBALL_DE Database)
 ├── 📂 RAW Schema         ◄── COPY INTO files from S3 Silver Parquet paths
 ├── 📂 STAGING Schema     ◄── dbt stg_* models (views for light casting & renaming)
 ├── 📂 ANALYTICS Schema   ◄── dbt dim_ / fact_ / mart_* models (The Galaxy Schema)
 └── 📂 SNAPSHOTS Schema   ◄── dbt snapshots (Historical SCD Type 2 tracking)
-
+```
 # 🏗️ Data Modeling Strategy: The Galaxy Schema
 
 Instead of a traditional single-fact Star Schema, this project implements a Galaxy Schema (Fact Constellation). Because football analytics demands slicing metrics across completely different grains (e.g., per-match statistics, historical club transfers, or real-time live events), we utilize five distinct fact tables sharing a core set of conformed dimensions.  
