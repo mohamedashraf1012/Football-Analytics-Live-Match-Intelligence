@@ -191,34 +191,65 @@ python run_all_silver.py
 
 ### 3️⃣ Gold Layer — Snowflake + dbt
 
-Silver Parquet files are loaded into Snowflake via `COPY INTO`, then transformed through three dbt layers into a clean **Galaxy Schema** — multiple fact tables sharing a set of conformed dimension tables.
+Silver Parquet files are loaded into Snowflake via `COPY INTO`, then transformed
+through dbt into a **Galaxy Schema (Fact Constellation)** — five fact tables at
+different grains sharing a set of conformed dimension tables.
+
 
 ```
 Snowflake
-├── RAW schema         ← COPY INTO from S3 silver/
+├── RAW schema         ← COPY INTO from S3 silver
 ├── STAGING schema     ← dbt stg_* models (rename, cast, add loaded_at)
-└── MARTS schema       ← dbt mart_* models (Galaxy Schema)
-    ├── Dimensions: dim_player, dim_club, dim_competition, dim_date, dim_country
-    ├── Facts:      fact_appearances, fact_transfers, fact_game_events
-    └── Marts:      mart_player_performance
-                    mart_club_transfer_spending
-                    mart_league_standings
-                    mart_player_valuation_history
+├── MARTS schema       ← dbt dim_, fact_, mart_* models (Galaxy Schema)
+│   ├── Dimensions: dim_player, dim_club, dim_competition, dim_date
+│   ├── Facts:      fact_appearances, fact_matches, fact_transfers,
+│   │               fact_player_valuations, fact_game_events
+│   └── Marts:      mart_player_performance
+│                   mart_club_transfer_spending
+│                   mart_club_match_stats
+│                   mart_match_events_live
+└── SNAPSHOTS schema   ← dbt snapshots (SCD Type 2)
+├── snap_player_valuations
+└── snap_dim_player
 ```
 
-**Why Galaxy Schema?** Three fact tables — `fact_appearances`, `fact_transfers`, and `fact_game_events` — all share the same conformed dimensions (`dim_player`, `dim_club`, `dim_date`, `dim_competition`). This lets Power BI slice player performance, transfer spending, and match events consistently by the same club, player, and date filters without duplicating dimension logic.
+**Why Galaxy Schema?** Five fact tables — `fact_appearances`, `fact_matches`,
+`fact_transfers`, `fact_player_valuations`, and `fact_game_events` — share the
+same conformed dimensions (`dim_player`, `dim_club`, `dim_competition`,
+`dim_date`). Each fact sits at a different grain (per appearance, per match,
+per transfer, per valuation snapshot, per event), but sharing dimensions lets
+Power BI slice player performance, transfers, match stats, and live match
+events consistently by the same player/club/competition/date filters.
+`fact_game_events` is materialized incrementally and kept isolated so the
+streaming pipeline (Kafka) can append to it without touching the other facts.
 
-**Staging layer** handles light renaming, type casting, and adds a `loaded_at` timestamp to every table for traceability.
+**Staging layer** handles light renaming, type casting, and adds a `loaded_at`
+timestamp to every table for traceability. `stg_games` also derives the
+home/away `hosting` and `is_win` logic that replaces the dropped
+`club_games` table.
 
-**Marts layer** contains the business logic — including the **point-in-time join** between `fact_appearances` and `player_valuations`, which uses a `MAX(date) WHERE date <= appearance_date` correlated subquery to attach each appearance to the player's most recent market value at that point in time.
+**Dimensions**: `dim_player` carries the player's current market value plus
+their *latest* valuation (joined from `stg_player_valuations` where
+`is_latest_valuation = TRUE`) as convenience columns — full valuation history
+lives only in `fact_player_valuations`.
+
+**Marts layer** contains the aggregated, Power BI-ready business logic, e.g.
+`mart_player_performance` aggregates `fact_appearances` by player/season,
+`mart_club_match_stats` unpivots `fact_matches` into a home/away club
+perspective to compute win rates, and `mart_match_events_live` computes
+running goal/card/substitution totals per match from `fact_game_events`.
 
 **Run dbt models:**
-
 ```bash
-cd batch/gold/
-dbt run --select staging        # run staging layer
-dbt run --select marts          # run marts layer
-dbt test                        # run data quality tests
+cd football_de
+
+dbt deps                         # install dbt_utils
+dbt snapshot                     # SCD Type 2 snapshots (run first)
+dbt run --select staging         # 8 staging views
+dbt run --select dimensions      # 4 dimension tables
+dbt run --select facts           # 5 fact tables
+dbt run --select marts           # 4 mart tables
+dbt test                         # data quality tests
 ```
 
 ---
