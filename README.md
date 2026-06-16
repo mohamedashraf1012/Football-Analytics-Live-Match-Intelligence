@@ -7,7 +7,7 @@
 
 *Batch + Real-Time Streaming | Lambda × Medallion Architecture*
 
----
+
 <br/>
 
 <!-- ── TOOL ICONS — replace each src path with your downloaded PNG ── -->
@@ -125,9 +125,6 @@ This data flows through a fully automated **Batch Pipeline** while simultaneousl
 
 ---
 
-
-
----
 
 ## 🔄 Pipeline Breakdown
 
