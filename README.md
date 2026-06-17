@@ -497,40 +497,18 @@ FootballFlow/
 │
 ├── 📂 batch/
 │   │
-│   ├── 📂 bronze/
-│   │   └── verify_bronze.py         
+│   ├── 📂 bronze/      
 │   │
-│   ├── 📂 silver/
-│   │   ├── 📂 cleaning/
-│   │   ├── 📂 exploration/
-│   │   ├── spark_session.py         
-│   │   └── run_all_silver.py         
+│   ├── 📂 silver/      
 │   │
 │   └── 📂 gold/
-│       ├── dbt_project.yml
-│       ├── packages.yml
-│       ├── 📂 models/
-│       │   ├── 📂 staging/
-│       │   ├── 📂 dimensions/
-│       │   ├── 📂 facts/
-│       │   └── 📂 marts/
-│       └── 📂 snapshots/
+
 │
-├── 📂 streaming/
-│   ├── 📂 producer/
-│   │   └── match_event_producer.py   
-│   ├── 📂 consumer/
-│   │   └── spark_streaming_consumer.py  
-│   └── docker-compose.yml           
+├── 📂 streaming/        
 │
 ├── 📂 airflow/
-│   ├── 📂 dags/
-│   │   └── footballflow_batch_dag.py    
-│   └── docker-compose.yml
 │
 ├── 📂 dashboards/
-│
-├── 📂 docs/
 │      
 └── README.md
 ```
