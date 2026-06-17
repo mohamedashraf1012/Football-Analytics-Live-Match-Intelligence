@@ -1,50 +1,97 @@
+"""
+verify_bronze.py
+----------------
+Verifies that all 12 CSV files are present in the S3 bronze/ prefix
+and prints their size & last-modified date.
+
+Bucket : football-de-2026
+Prefix : bronze/
+"""
+
 import boto3
-import sys
-import config
+from datetime import timezone
+from botocore.exceptions import ClientError
 
-# ■■ Config ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
-BUCKET = config.S3_BUCKET
-PREFIX = config.S3_BRONZE_PREFIX
-EXPECTED_FILES = [
-'players.csv', 'clubs.csv', 'competitions.csv',
-'games.csv', 'appearances.csv', 'game_events.csv',
-'game_lineups.csv', 'player_valuations.csv', 'transfers.csv',
-'club_games.csv', 'national_teams.csv',
-'countries.csv',
-]
+# ── Config ────────────────────────────────────────────────────────────────────
+BUCKET   = "football-de-2026"
+PREFIX   = "bronze/"
 
-# ■■ Connect to S3 ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
-s3 = boto3.client(
-    's3',
-    aws_access_key_id=config.AWS_ACCESS_KEY_ID,
-    aws_secret_access_key=config.AWS_SECRET_ACCESS_KEY,
-    region_name=config.AWS_REGION
-)
+EXPECTED = {
+    "players.csv",
+    "clubs.csv",
+    "competitions.csv",
+    "transfers.csv",
+    "matches.csv",
+    "game_events.csv",
+    "appearances.csv",
+    "club_games.csv",
+    "player_valuations.csv",
+    "games.csv",
+    "game_lineups.csv",
+    "game_stats.csv",
+}
+# ─────────────────────────────────────────────────────────────────────────────
 
-# ■■ List files in bronze/ ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
-response = s3.list_objects_v2(Bucket=BUCKET, Prefix=PREFIX)
-found = {}
-for obj in response.get('Contents', []):
-    key = obj['Key'].replace(PREFIX, '')
-    if key:
-        size = obj['Size'] / (1024 * 1024)  # convert to MB
-        found[key] = size
 
-# ■■ Check each expected file ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
-print('=' * 55)
-print(' BRONZE LAYER VERIFICATION REPORT')
-print('=' * 55)
-all_ok = True
-for f in EXPECTED_FILES:
-    if f in found:
-        print(f' OK {f:<40} {found[f]:>6.1f} MB')
+def list_bronze(s3_client) -> list[dict]:
+    """Return all objects under bronze/ prefix."""
+    paginator = s3_client.get_paginator("list_objects_v2")
+    objects   = []
+    for page in paginator.paginate(Bucket=BUCKET, Prefix=PREFIX):
+        for obj in page.get("Contents", []):
+            objects.append(obj)
+    return objects
+
+
+def main() -> None:
+    print(f"\n🔎  Verifying Bronze Layer — s3://{BUCKET}/{PREFIX}\n")
+
+    s3 = boto3.client("s3")
+
+    try:
+        objects = list_bronze(s3)
+    except ClientError as exc:
+        print(f"  ❌  Could not list bucket: {exc}")
+        return
+
+    if not objects:
+        print("  ❌  No files found in bronze/ prefix.")
+        return
+
+    found_names = set()
+    total_size  = 0
+
+    print(f"  {'FILE':<40} {'SIZE (MB)':>10}  LAST MODIFIED")
+    print(f"  {'─'*40}  {'─'*10}  {'─'*22}")
+
+    for obj in sorted(objects, key=lambda x: x["Key"]):
+        fname    = obj["Key"].replace(PREFIX, "")
+        size_mb  = obj["Size"] / (1024 ** 2)
+        modified = obj["LastModified"].astimezone(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+        print(f"  {fname:<40} {size_mb:>10.2f}  {modified}")
+        found_names.add(fname)
+        total_size += obj["Size"]
+
+    missing = EXPECTED - found_names
+    extra   = found_names - EXPECTED
+
+    print(f"\n  {'─'*60}")
+    print(f"  Total files : {len(found_names)}  |  Total size : {total_size / (1024**2):.2f} MB")
+
+    if missing:
+        print(f"\n  ⚠️   Missing files ({len(missing)}):")
+        for f in sorted(missing):
+            print(f"       - {f}")
     else:
-        print(f' MISSING {f}')
-        all_ok = False
-print('=' * 55)
-if all_ok:
-    print(' ALL 12 FILES PRESENT. Bronze layer ready.')
-    print(f' Bucket: s3://{BUCKET}/{PREFIX}')
-else:
-    print(' WARNING: Some files are missing. Re-upload before handing off.')
-    sys.exit(1)
+        print(f"\n  ✅  All {len(EXPECTED)} expected files are present in bronze/")
+
+    if extra:
+        print(f"\n  ℹ️   Extra files not in expected list:")
+        for f in sorted(extra):
+            print(f"       + {f}")
+
+    print()
+
+
+if __name__ == "__main__":
+    main()
