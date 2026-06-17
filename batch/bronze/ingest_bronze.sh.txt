@@ -1,0 +1,13 @@
+# Ingest Raw 12 CSV Files to S3 Bronze Layer
+aws s3 cp players.csv s3://football-de-2026/batch/bronze/
+aws s3 cp clubs.csv s3://football-de-2026/batch/bronze/
+aws s3 cp competitions.csv s3://football-de-2026/batch/bronze/
+aws s3 cp games.csv s3://football-de-2026/batch/bronze/
+aws s3 cp appearances.csv s3://football-de-2026/batch/bronze/
+aws s3 cp game_events.csv s3://football-de-2026/batch/bronze/
+aws s3 cp game_lineups.csv s3://football-de-2026/batch/bronze/
+aws s3 cp player_valuations.csv s3://football-de-2026/batch/bronze/
+aws s3 cp transfers.csv s3://football-de-2026/batch/bronze/
+aws s3 cp club_games.csv s3://football-de-2026/batch/bronze/
+aws s3 cp national_teams.csv s3://football-de-2026/batch/bronze/
+aws s3 cp countries.csv s3://football-de-2026/batch/bronze/
