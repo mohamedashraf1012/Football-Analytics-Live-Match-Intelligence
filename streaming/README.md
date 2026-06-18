@@ -1,124 +1,171 @@
-# ⚡ FootballFlow — Streaming Pipeline
+<img width="2151" height="731" alt="logo_png" src="https://github.com/user-attachments/assets/56da4330-ef36-4ca7-9b69-96ab685235e9" />
 
-> **Real-Time Match Intelligence** · Speed Layer of the FootballFlow Lambda Architecture
+<div align="center">
+
+**Real-Time Football Analytics & Live Match Intelligence**
+
+*Speed Layer · Lambda Architecture · Kafka × Spark × InfluxDB × Grafana*
 
 <br/>
 
+<table>
+  <tr>
+    <td align="center">
+      <img width="60" height="60" alt="kafka" src="https://github.com/user-attachments/assets/0c9f9b8f-077f-4b2d-82e9-a38f6cb3ca3c" /><br/>
+      <sub><b>Kafka</b></sub>
+    </td>
+    <td align="center">
+      <img width="80" height="60" alt="spark" src="https://github.com/user-attachments/assets/e9d3ad99-76db-4845-bdc6-1bc32ed8bdf5" /><br/>
+      <sub><b>Spark</b></sub>
+    </td>
+    <td align="center">
+      <img width="65" height="63" alt="influxdb" src="https://github.com/user-attachments/assets/e8efcf74-d493-4e9f-ac1e-ef5bf8c07663" /><br/>
+      <sub><b>InfluxDB</b></sub>
+    </td>
+    <td align="center">
+      <img width="60" height="60" alt="grafana" src="https://github.com/user-attachments/assets/51943e84-3778-4de3-bbc8-ed7d557d1083" /><br/>
+      <sub><b>Grafana</b></sub>
+    </td>
+    <td align="center">
+      <img width="65" height="63" alt="docker" src="https://github.com/user-attachments/assets/825a0362-e9c7-44dd-ab36-d544dbda321a" /><br/>
+      <sub><b>Docker</b></sub>
+    </td>
+  </tr>
+</table>
+
+</div>
+
+---
+
 ## 🔭 Overview
 
-This repository contains the **Streaming Pipeline** component of the FootballFlow data engineering platform — a production-grade speed layer that simulates live football match broadcasts and processes events in real time.
+This repository contains the **Streaming Pipeline** of the **FootballFlow** data engineering platform — the speed layer of a Lambda Architecture that brings football matches to life in real time.
 
-While the batch pipeline handles historical data at scale, this pipeline answers a different question: **what is happening right now, in this match, at this minute?**
+A Python GUI simulator replays real match events from the Transfermarkt dataset through **Apache Kafka**. **Spark Structured Streaming** consumes, validates, and enriches those events across three internal topics. Processed metrics land in **InfluxDB** and surface instantly on live **Grafana** dashboards — all while the match is still being simulated.
 
-A Python simulator replays real match events from the Transfermarkt dataset through Apache Kafka. A Spark Structured Streaming consumer processes and enriches those events, stores them in InfluxDB for time-series analysis, and surfaces them on live Grafana dashboards — all in real time.
+> Built as part of the **Data Engineering Track graduation project at ITI (Information Technology Institute)**.
+
+### ✨ Key Highlights
+
+| Feature | Description |
+|---|---|
+| **Live Match Simulator** | Python + Tkinter GUI replays real game events through Kafka in real time |
+| **4 Simulation Speeds** | x5 · x10 · x18 · x30 — from 18 minutes down to 3 minutes per match |
+| **3-Stage Stream Processing** | Raw Events → Validated Events → Analytics Preparation |
+| **35+ Column Enriched Events** | Player info, club stats, competition metadata, lineup details per event |
+| **Time-Series Storage** | InfluxDB 2.7 stores match metrics by minute |
+| **Live Grafana Dashboard** | Goals · Cards · Substitutions · Live Score — all updating in real time |
+| **Full Docker Setup** | One `docker-compose up -d` spins up the entire infrastructure |
 
 ---
 
 ## 🏗️ Architecture
+
+![Stream Pipeline](docs/stream_pipeline.png)
 
 ```
 football_events_enriched2.csv
            │
            ▼
   ┌─────────────────────┐
-  │  Match Simulator    │  ← GUI app (Tkinter) — replays events minute by minute
-  │  match_simulator.py │    with configurable speed (x5 / x10 / x18 / x30)
+  │   Match Simulator   │  ← Tkinter GUI · speeds: x5 / x10 / x18 / x30
+  │  match_simulator.py │    Goals · Cards · Substitutions · Shootout
   └────────┬────────────┘
-           │  JSON messages → topic: real_match_events
+           │  JSON → topic: real_match_events
            ▼
   ┌─────────────────────┐
-  │   Apache Kafka      │  ← KRaft mode (no Zookeeper), Confluent 7.6.1
-  │   (Docker)          │    3 partitions · 24h retention
+  │   Apache Kafka      │  ← KRaft mode (no Zookeeper) · 3 partitions
+  │   (KRaft 7.6.1)     │    Kafka UI at :8081
   └────────┬────────────┘
            │
            ▼
-  ┌─────────────────────┐
-  │  Spark Structured   │  ← Windowed aggregations · enrichment · validation
-  │  Streaming          │    Jupyter all-spark-notebook (Spark 3.5.3)
-  └────────┬────────────┘
+  ┌──────────────────────────────────────────────┐
+  │         Spark Structured Streaming           │
+  │                                              │
+  │  raw_events → validated_events →             │
+  │               analytics_preparation          │
+  └────────┬─────────────────────────────────────┘
            │
            ▼
   ┌─────────────────────┐
-  │     InfluxDB        │  ← Time-series storage · match metrics per minute
+  │     InfluxDB 2.7    │  ← Bucket: match_events · 7d retention
   └────────┬────────────┘
            │
-    ┌──────┴───────┐
-    ▼              ▼
- Grafana      Snowflake
-(live dash)  (sync job → fact_game_events)
-```
-
----
-
-## 📁 Repository Structure
-
-```
-streaming/
-│
-├── 📄 docker-compose.yml          ← Spins up Kafka + Kafka UI + Spark + InfluxDB + Grafana
-├── 📄 config.py.example           ← Template for credentials (copy → config.py, never commit)
-│
-├── 📂 datasets/
-│   └── raw_data/
-│       ├── football_events_enriched2.csv   ← Enriched dataset used by the simulator
-│       └── (other source CSVs)
-│
-├── 📂 pipeline/
-│   ├── build_enriched_dataset.py   ← Merges 7 CSVs → produces football_events_enriched2.csv
-│   └── verify_kafka.py             ← Health check: confirms Kafka broker is reachable
-│
-├── 📂 simulator/
-│   └── match_simulator.py          ← Main GUI simulator (Tkinter) — select match, set speed, stream
-│
-├── 📂 notebooks/
-│   ├── 01_stream_ingest.ipynb      ← Kafka consumer: read raw events from topic
-│   ├── 02_stream_process.ipynb     ← Spark Structured Streaming: process + enrich events
-│   └── 03_stream_sink_influxdb.ipynb ← Write processed events to InfluxDB
-│
-├── 📂 scripts/exploration/
-│   ├── check_csv.py                ← Inspect source CSV schemas and row counts
-│   ├── clean_nulls_colums.py       ← Identify and handle null columns
-│   ├── dataQ.py                    ← Data quality checks on raw events
-│   ├── download_csv_files.py       ← Download source CSVs from Kaggle
-│   ├── merge_all_csv.py            ← Helper for CSV joining experiments
-│   └── test_bronze.py              ← Validate bronze-layer source files
-│
-└── 📂 docs/
-    ├── footballflow_dashboard3.json ← Grafana dashboard export (import-ready)
-    ├── full stream.png              ← End-to-end pipeline diagram
-    ├── stream in blocks.png         ← Component block diagram
-    ├── stream pipeline.png          ← Detailed pipeline flow
-    └── grafana dashboard.png        ← Grafana dashboard screenshot
+    ┌──────┴──────────┐
+    ▼                 ▼
+ Grafana          Snowflake
+(:3000)          (optional sync)
 ```
 
 ---
 
 ## 🛠️ Tech Stack
 
-| Component | Tool | Version |
+![Tech Stack & Infrastructure](docs/stream_in_blocks.png)
+
+| Layer | Tool | Detail |
 |---|---|---|
-| **Message Broker** | Apache Kafka (KRaft) | Confluent 7.6.1 |
-| **Kafka UI** | Provectus Kafka UI | latest |
-| **Stream Processing** | Apache Spark Structured Streaming | 3.5.3 |
-| **Simulator UI** | Python + Tkinter | 3.10 / 3.11 |
-| **Time-Series DB** | InfluxDB | (Docker) |
-| **Live Dashboards** | Grafana | (Docker) |
-| **Containerisation** | Docker + Docker Compose | latest |
-| **Dataset** | Transfermarkt via Kaggle | 12 CSV tables |
+| **Simulator** | Python 3.11 + Tkinter | GUI app — replays match events minute by minute |
+| **Message Broker** | Apache Kafka (KRaft) | Confluent 7.6.1 · topic: `real_match_events` · 3 partitions |
+| **Kafka UI** | Provectus Kafka UI | Topic browser & consumer groups at `:8081` |
+| **Stream Processing** | Apache Spark 3.5.3 | Structured Streaming — 3-stage internal pipeline |
+| **Time-Series DB** | InfluxDB 2.7 | Bucket: `match_events` · real-time match metrics |
+| **Live Dashboards** | Grafana | Live score · goals · cards · subs at `:3000` |
+| **Containerisation** | Docker + Docker Compose | Full stack with one command |
+| **Dataset** | Transfermarkt via Kaggle | 7 CSV tables joined into 35-column enriched dataset |
 
 ---
 
-## ⚙️ Services (docker-compose.yml)
+## ⚙️ Docker Services
 
-| Service | Port | Description |
-|---|---|---|
-| `footballflow-kafka` | `9092` (host) · `29092` (internal) · `9094` (Spark) | Kafka broker — KRaft mode, single node |
-| `footballflow-kafka-ui` | `8081` | Provectus Kafka UI — topic browser, consumer groups |
-| `spark` | `8888` (Jupyter) · `4040` (Spark UI) | all-spark-notebook with PySpark 3.5.3 |
-| `influxdb` | `8086` | Time-series storage for match metrics |
-| `grafana` | `3000` | Live match event dashboards |
+| Container | Image | Ports | Purpose |
+|---|---|---|---|
+| `footballflow-kafka` | `confluentinc/cp-kafka:7.6.1` | 9092 · 9093 · 9094 | Kafka broker — KRaft mode |
+| `footballflow-kafka-ui` | `provectuslabs/kafka-ui:latest` | 8081 | Topic browser |
+| `footballflow-spark` | `quay.io/jupyter/all-spark-notebook:spark-3.5.3` | 8888 · 4040 | Spark + Jupyter |
+| `footballflow-influxdb` | `influxdb:2.7` | 8086 | Time-series storage |
+| `footballflow-grafana` | `grafana/grafana:latest` | 3000 | Live dashboards |
 
-> Kafka runs in **KRaft mode** (no Zookeeper). The cluster ID is pre-configured — no manual init required.
+---
+
+## 📁 Repository Structure
+
+```
+Football-Analytics-Live-Match-Intelligence/
+│
+├── 📄 docker-compose.yml              ← Full infrastructure: Kafka + Spark + InfluxDB + Grafana
+├── 📄 config.py.example               ← Credentials template (copy → config.py, never commit)
+│
+├── 📂 datasets/
+│   └── raw_data/
+│       └── football_events_enriched2.csv   ← Enriched input for the simulator (35+ columns)
+│
+├── 📂 pipeline/
+│   ├── build_enriched_dataset.py      ← Joins 7 CSVs → produces football_events_enriched2.csv
+│   └── verify_kafka.py                ← Health check: confirms Kafka broker is reachable
+│
+├── 📂 simulator/
+│   └── match_simulator.py             ← Main GUI app — select match, set speed, stream live
+│
+├── 📂 notebooks/
+│   ├── 01_stream_ingest.ipynb         ← Read raw events from Kafka topic
+│   ├── 02_stream_process.ipynb        ← Spark Structured Streaming: validate + enrich
+│   └── 03_stream_sink_influxdb.ipynb  ← Write processed events to InfluxDB
+│
+├── 📂 scripts/exploration/
+│   ├── check_csv.py                   ← Inspect CSV schemas and row counts
+│   ├── clean_nulls_colums.py          ← Identify and handle null columns
+│   ├── dataQ.py                       ← Data quality checks on raw events
+│   ├── download_csv_files.py          ← Download source CSVs from Kaggle
+│   ├── merge_all_csv.py               ← CSV joining experiments
+│   └── test_bronze.py                 ← Validate source files
+│
+└── 📂 docs/
+    ├── footballflow_dashboard3.json   ← Grafana dashboard export (import-ready)
+    ├── stream_pipeline.png            ← End-to-end pipeline diagram
+    ├── stream_in_blocks.png           ← Tech stack & infrastructure overview
+    └── grafana_dashboard.png          ← Live dashboard screenshot
+```
 
 ---
 
@@ -130,7 +177,7 @@ streaming/
 |---|---|
 | Docker Desktop | Latest |
 | Python | 3.10 or 3.11 |
-| Java JDK | 11 (required by Spark locally) |
+| Java JDK | 11 (required by Spark) |
 
 ### 1. Clone the repository
 
@@ -159,31 +206,35 @@ pip install -r requirements.txt
 
 ### 4. Build the enriched dataset
 
-Run this once to merge the 7 source CSVs into the simulator's input file:
+Run once to produce the simulator's input file:
 
 ```bash
 python pipeline/build_enriched_dataset.py
 ```
 
-This reads from `datasets/raw_data/` and produces `football_events_enriched2.csv` — a flat, enriched table with 35+ columns including player info, club stats, competition metadata, and lineup details.
+This joins 7 Transfermarkt CSV tables (events · games · players · clubs · competitions · lineups · club_games) into a flat 35-column enriched CSV. Output: `datasets/raw_data/football_events_enriched2.csv`
 
-### 5. Start all Docker services
+```
+✅ Done!
+Rows   : ~2,000
+Columns: 35
+```
+
+### 5. Start all services
 
 ```bash
 docker-compose up -d
 ```
 
-Verify everything is running:
+| URL | Service |
+|---|---|
+| http://localhost:8081 | Kafka UI |
+| http://localhost:8888 | Jupyter (Spark) |
+| http://localhost:4040 | Spark UI |
+| http://localhost:8086 | InfluxDB |
+| http://localhost:3000 | Grafana |
 
-```bash
-docker ps
-# Kafka UI → http://localhost:8081
-# Spark (Jupyter) → http://localhost:8888
-# Grafana → http://localhost:3000
-# InfluxDB → http://localhost:8086
-```
-
-Confirm Kafka is reachable:
+Confirm Kafka is ready:
 
 ```bash
 python pipeline/verify_kafka.py
@@ -191,70 +242,72 @@ python pipeline/verify_kafka.py
 
 ### 6. Import the Grafana dashboard
 
-1. Open Grafana at `http://localhost:3000`
+1. Open Grafana at `http://localhost:3000` (admin / footballflow123)
 2. Go to **Dashboards → Import**
 3. Upload `docs/footballflow_dashboard3.json`
-4. Connect to your InfluxDB data source
+4. Set InfluxDB as the data source (token: `footballflow-token`)
 
-### 7. Run the Match Simulator
+### 7. Run the Spark notebooks
+
+Open Jupyter at `http://localhost:8888` and run in order:
+
+```
+01_stream_ingest.ipynb         → connect to Kafka, read raw events
+02_stream_process.ipynb        → validate, enrich, windowed aggregations
+03_stream_sink_influxdb.ipynb  → write metrics to InfluxDB
+```
+
+### 8. Launch the Match Simulator
 
 ```bash
 python simulator/match_simulator.py
 ```
 
-The GUI will launch:
-
-1. Enter a **Game ID** from the enriched dataset (first 10 available IDs are shown)
-2. Choose a **simulation speed** — x5 (~18 min) · x10 (~9 min) · x18 (~5 min) · x30 (~3 min)
+1. Enter a **Game ID** from the enriched dataset (first 10 shown automatically)
+2. Choose a **simulation speed** — x5 / x10 / x18 / x30
 3. Click **▶ START SIMULATION**
 
-The simulator replays match events minute by minute, streams each event as a JSON message to the `real_match_events` Kafka topic, and displays a live scoreboard with dual team feeds.
-
-### 8. Process events with Spark
-
-Open Jupyter at `http://localhost:8888` and run the notebooks in order:
-
-```
-01_stream_ingest.ipynb      → connect to Kafka, read raw events
-02_stream_process.ipynb     → windowed aggregations, enrichment, validation
-03_stream_sink_influxdb.ipynb → write metrics to InfluxDB
-```
+The simulator streams each match event as a JSON message to Kafka in real time, while displaying a live scoreboard with dual team feeds.
 
 ---
 
-## 🎮 Match Simulator — How It Works
+## 🎮 Match Simulator — Deep Dive
 
-The simulator (`match_simulator.py`) is a full GUI application built with Tkinter.
+The simulator is a full Tkinter GUI with two screens:
 
-**Input:** `football_events_enriched2.csv` — produced by `build_enriched_dataset.py` by joining 7 Transfermarkt CSV tables (events, games, players, clubs, competitions, lineups, club_games) into a flat enriched format with 35+ columns per event.
+**Screen 1 — Match Selection**
+- Enter any Game ID → app previews teams, final score, competition, stadium, event count
+- Choose simulation speed
+- Available Game IDs listed automatically from the dataset
 
-**Simulation flow:**
+**Screen 2 — Live Simulation**
+- Real-time scoreboard with home/away scores
+- Live match clock with progress bar (supports Extra Time up to 120')
+- Per-team event feeds scrolling in real time
+- Stats counters: goals · cards · substitutions
+- Kafka connection status indicator
 
-1. User selects a Game ID — the app previews the match (teams, score, competition, stadium, event count)
-2. Events are replayed in chronological order, with real timing gaps between minutes scaled by the chosen speed factor
-3. Each event is classified as `goals`, `cards`, or `substitutions` by parsing the `description` field
-4. Each event is sent as a JSON message to Kafka topic `real_match_events` with full enriched context + metadata fields (`_ingested_at`, `_source`, `_pipeline`)
-5. The live scoreboard updates in real time — goals increment the score, cards/subs update the stats counters, and each team's event feed scrolls live
+**Event classification** — inferred from the `description` field:
 
-**Kafka message schema (35+ fields):**
+| Type | Keywords detected |
+|---|---|
+| `goals` | goal · scored · shot · header · penalty · free kick · tap-in · own-goal |
+| `cards` | yellow card · second yellow · red card |
+| `substitutions` | everything else |
+
+**Kafka message** — each event is sent as JSON with 35+ enriched fields plus metadata:
 
 ```json
 {
-  "game_event_id": "...",
   "game_id": 12345,
   "minute": 67,
   "event_type": "goals",
-  "description": "Header from close range",
-  "player_name": "...",
-  "club_id": 123,
-  "club_name": "...",
-  "home_club_id": 123,
-  "away_club_id": 456,
+  "player_name": "Georges Mikautadze",
+  "club_name": "Football Club de Metz",
   "home_club_goals": 2,
   "away_club_goals": 1,
-  "competition_name": "...",
-  "stadium": "...",
-  "season": "2023",
+  "competition_name": "Ligue 1",
+  "stadium": "Stade Saint-Symphorien",
   "_ingested_at": "2026-06-19T10:00:00",
   "_source": "match_simulator_v2",
   "_pipeline": "footballflow_streaming"
@@ -263,66 +316,75 @@ The simulator (`match_simulator.py`) is a full GUI application built with Tkinte
 
 ---
 
-## 📊 Grafana Dashboard
+## 📊 Grafana — Live Dashboard
 
-The live Grafana dashboard (importable from `docs/footballflow_dashboard3.json`) displays:
+![Grafana Live Dashboard](docs/grafana_dashboard.png)
 
-- **Goal timeline** — goals per team plotted over match minutes
-- **Card counts** — yellow and red cards per team
-- **Substitution tracker** — subs per team over time
-- **Event rate** — total events per minute (match intensity indicator)
+The live dashboard updates in real time as the simulator streams events:
 
-> 📸 See `docs/grafana dashboard.png` for a screenshot.
-
----
-
-## 🔄 Pipeline Dataset — build_enriched_dataset.py
-
-Before running the simulator, you need to build the enriched dataset. This script:
-
-1. **Samples 20 matches** randomly from `game_events.csv` (configurable via `SAMPLE_SIZE`)
-2. **Joins 7 tables:** events + games + players + clubs + competitions + lineups + club_games
-3. **Resolves all column conflicts** before merging (renames `type`, `date`, `name`, `position` etc. to unambiguous names)
-4. **Outputs a flat 35-column CSV** ready for the simulator
-
-```bash
-python pipeline/build_enriched_dataset.py
-# ✅ Done!
-# Rows   : ~2,000
-# Columns: 35
-# Saved  : datasets/raw_data/football_events_enriched2.csv
-```
-
-To use a different sample or different random seed, edit `SAMPLE_SIZE` and `RANDOM_STATE` at the top of the script.
-
----
-
-## 🔗 Part of FootballFlow
-
-This streaming pipeline is the **speed layer** of the larger FootballFlow platform, which implements a full Lambda Architecture:
-
-| Layer | Repo / Component |
+| Panel | Description |
 |---|---|
-| **Batch** | Bronze (S3) → Silver (Spark) → Gold (Snowflake + dbt) |
-| **Speed** | **This repo** — Kafka → Spark Streaming → InfluxDB → Grafana |
-| **Serving** | Power BI (batch) + Grafana (real-time) |
+| **Live Score** | Current score per team — large display |
+| **Goals Feed** | Goal minute + scorer name per team |
+| **Cards Feed** | Card type · minute · player per team |
+| **Substitutions Feed** | Minute · player out per team |
 
-Streamed events are also synced from InfluxDB into Snowflake's `RAW.STREAMING` schema, where `fact_game_events` unions them with batch-loaded events (`source_type = 'stream'`), so Power BI reflects both historical and live match data.
+InfluxDB credentials (defaults):
+- **URL:** `http://localhost:8086`
+- **Org:** `footballflow`
+- **Bucket:** `match_events`
+- **Token:** `footballflow-token`
+
+---
+
+## 🔄 Stream Processing — 3 Stages
+
+Spark Structured Streaming processes events through three internal Kafka topics:
+
+```
+real_match_events (raw)
+        │
+        ▼
+   raw_events
+   Ingest raw JSON from Kafka · parse schema · add ingestion timestamp
+        │
+        ▼
+   validated_events
+   Validate fields · clean nulls · cast types · filter invalid minutes
+        │
+        ▼
+   analytics_preparation
+   Windowed aggregations · running totals per match · analytics-ready output
+        │
+        ▼
+     InfluxDB
+```
 
 ---
 
 ## ⚠️ Important Notes
 
 - **`config.py` is gitignored** — never commit credentials. Use `config.py.example` as the template.
-- **Raw CSV files are gitignored** — download from [Kaggle: davidcariboo/player-scores](https://www.kaggle.com/datasets/davidcariboo/player-scores) and place in `datasets/raw_data/`.
-- **Kafka KRaft** requires Docker Desktop. The `CLUSTER_ID` is pre-set — no manual `kafka-storage format` step needed.
-- **Spark container** runs as root (`user: root`) with sudo enabled for notebook package installs.
+- **CSV files are gitignored** — download from [Kaggle: davidcariboo/player-scores](https://www.kaggle.com/datasets/davidcariboo/player-scores) and place in `datasets/raw_data/`.
+- **Kafka runs in KRaft mode** — no Zookeeper, no manual cluster init. `CLUSTER_ID` is pre-configured in `docker-compose.yml`.
+- **Snowflake sync is optional** — streamed events can be copied from InfluxDB into Snowflake's `RAW.STREAMING` schema for Gold layer unioning with batch data.
+
+---
+
+## 🔗 Part of FootballFlow
+
+This is the **speed layer** of the larger FootballFlow platform:
+
+| Layer | Pipeline |
+|---|---|
+| **Batch** | Bronze (S3) → Silver (Spark) → Gold (Snowflake + dbt) → Power BI |
+| **Speed** | **This repo** — Kafka → Spark Streaming → InfluxDB → Grafana |
 
 ---
 
 <div align="center">
 
-**FootballFlow Streaming** — *The speed layer of the beautiful game.*
+**FootballFlow Streaming** — *From Live Events to Real-Time Insights.*
 
 ⚡ Built with Python · Kafka · Spark · InfluxDB · Grafana · Docker
 
