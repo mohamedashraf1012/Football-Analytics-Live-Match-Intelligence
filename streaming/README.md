@@ -61,7 +61,7 @@ A Python GUI simulator replays real match events from the Transfermarkt dataset 
 
 ## 🏗️ Architecture
 
-![Stream Pipeline](docs/stream pipeline.png)
+![Stream Pipeline](docs/stream%20pipeline.png)
 
 ```
 football_events_enriched2.csv
@@ -101,7 +101,7 @@ football_events_enriched2.csv
 
 ## 🛠️ Tech Stack
 
-![Tech Stack & Infrastructure](docs/stream in blocks.png)
+![Tech Stack & Infrastructure](docs/stream%20in%20blocks.png)
 
 | Layer | Tool | Detail |
 |---|---|---|
@@ -318,7 +318,7 @@ The simulator is a full Tkinter GUI with two screens:
 
 ## 📊 Grafana — Live Dashboard
 
-![Grafana Live Dashboard](docs/grafana dashboard.png)
+![Grafana Live Dashboard](docs/grafana%20dashboard.png)
 
 The live dashboard updates in real time as the simulator streams events:
 
