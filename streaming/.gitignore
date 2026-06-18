@@ -25,6 +25,7 @@ datasets/raw_data/
 info/
 docs/iti grad.docx
 docs/footballflow_prompt.md
+docs/full stream.png
 docs/footballflow_prompt_v3_1.md
 simulator/footballflow_simulator.py
 simulator/footballflow_simulator_4.py
