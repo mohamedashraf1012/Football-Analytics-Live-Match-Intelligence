@@ -1,0 +1,68 @@
+# ============================================================
+# FootballFlow Streaming — .gitignore
+# ============================================================
+
+# --- Secrets & Credentials (CRITICAL — never commit these) ---
+config.py
+Keys_MA.txt
+ignore/
+*.env
+.env
+.env.*
+**/secrets/
+**/credentials/
+*.pem
+*.key
+
+# --- Raw / large datasets ---
+datasets/raw_data/
+*.csv
+*.parquet
+*.xlsx
+!sample_data/**
+
+# --- Excluded project files ---
+info/
+docs/iti grad.docx
+docs/footballflow_prompt.md
+docs/footballflow_prompt_v3_1.md
+simulator/footballflow_simulator.py
+simulator/footballflow_simulator_4.py
+STEPS.md
+reorganize_project.ps1
+
+# --- Jupyter ---
+.ipynb_checkpoints/
+**/.ipynb_checkpoints/
+
+# --- Python ---
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+.venv/
+venv/
+env/
+
+# --- Docker / Kafka local volumes ---
+kafka-data/
+**/kafka-data/
+influxdb-data/
+grafana-data/
+
+# --- Logs ---
+*.log
+logs/
+
+# --- OS / Editor junk ---
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# --- Spark / Streaming checkpoints ---
+checkpoint/
+**/checkpoint/
+_spark_metadata/

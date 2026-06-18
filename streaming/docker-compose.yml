@@ -1,0 +1,165 @@
+# ============================================================
+# FootballFlow — Streaming Infrastructure
+# Kafka (KRaft) · Spark · InfluxDB · Grafana
+# Optimized for Windows + Docker Desktop
+# ============================================================
+
+networks:
+  footballflow-net:
+    driver: bridge
+
+volumes:
+  kafka-data:
+    driver: local
+  influxdb-data:
+    driver: local
+  grafana-data:
+    driver: local
+
+services:
+
+  # ----------------------------------------------------------
+  # Kafka Broker (KRaft Mode — Single Node, No Zookeeper)
+  # ----------------------------------------------------------
+  kafka:
+    image: confluentinc/cp-kafka:7.6.1
+    container_name: footballflow-kafka
+    hostname: kafka
+    networks:
+      - footballflow-net
+    ports:
+      - "9092:9092"    # Python producers on Windows host
+      - "9093:9093"    # KRaft controller (internal)
+      - "9094:9094"    # Spark container
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:29092,PLAINTEXT_HOST://0.0.0.0:9092,DOCKER://0.0.0.0:9094,CONTROLLER://0.0.0.0:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092,DOCKER://host.docker.internal:9094
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT,DOCKER:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+
+      KAFKA_LOG_DIRS: /var/lib/kafka/data
+      KAFKA_NUM_PARTITIONS: 3
+      KAFKA_DEFAULT_REPLICATION_FACTOR: 1
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_MIN_INSYNC_REPLICAS: 1
+
+      KAFKA_LOG_RETENTION_HOURS: 24
+      KAFKA_LOG_SEGMENT_BYTES: 1073741824
+      KAFKA_LOG_RETENTION_CHECK_INTERVAL_MS: 300000
+
+      CLUSTER_ID: "MkU3OEVBNTcwNTJENDM2Qk"
+
+    volumes:
+      - kafka-data:/var/lib/kafka/data
+    healthcheck:
+      test: ["CMD", "kafka-broker-api-versions", "--bootstrap-server", "localhost:9092"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+
+  # ----------------------------------------------------------
+  # Kafka UI — Topic Browser & Consumer Groups
+  # ----------------------------------------------------------
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: footballflow-kafka-ui
+    hostname: kafka-ui
+    networks:
+      - footballflow-net
+    ports:
+      - "8081:8080"
+    environment:
+      KAFKA_CLUSTERS_0_NAME: FootballFlow-Local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092
+      DYNAMIC_CONFIG_ENABLED: "true"
+    depends_on:
+      kafka:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # ----------------------------------------------------------
+  # Spark — PySpark + Jupyter Notebook
+  # ----------------------------------------------------------
+  spark:
+    image: quay.io/jupyter/all-spark-notebook:spark-3.5.3
+    container_name: footballflow-spark
+    hostname: spark
+    networks:
+      - footballflow-net
+    ports:
+      - "8888:8888"    # Jupyter Notebook
+      - "4040:4040"    # Spark UI
+      - "18080:18080"  # Spark History Server
+    environment:
+      - PYSPARK_PYTHON=python3
+      - PYSPARK_DRIVER_PYTHON_OPTS=notebook --ip=0.0.0.0 --no-browser --allow-root
+      - GRANT_SUDO=yes
+    user: root
+    volumes:
+      - ./notebooks:/home/jovyan/work/notebooks
+      - ./datasets:/home/jovyan/work/datasets
+    depends_on:
+      kafka:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # ----------------------------------------------------------
+  # InfluxDB — Time-Series Storage for Match Metrics
+  # ----------------------------------------------------------
+  influxdb:
+    image: influxdb:2.7
+    container_name: footballflow-influxdb
+    hostname: influxdb
+    networks:
+      - footballflow-net
+    ports:
+      - "8086:8086"
+    environment:
+      DOCKER_INFLUXDB_INIT_MODE: setup
+      DOCKER_INFLUXDB_INIT_USERNAME: admin
+      DOCKER_INFLUXDB_INIT_PASSWORD: footballflow123
+      DOCKER_INFLUXDB_INIT_ORG: footballflow
+      DOCKER_INFLUXDB_INIT_BUCKET: match_events
+      DOCKER_INFLUXDB_INIT_RETENTION: 7d
+      DOCKER_INFLUXDB_INIT_ADMIN_TOKEN: footballflow-token
+    volumes:
+      - influxdb-data:/var/lib/influxdb2
+    healthcheck:
+      test: ["CMD", "influx", "ping"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+
+  # ----------------------------------------------------------
+  # Grafana — Live Match Event Dashboards
+  # ----------------------------------------------------------
+  grafana:
+    image: grafana/grafana:latest
+    container_name: footballflow-grafana
+    hostname: grafana
+    networks:
+      - footballflow-net
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: footballflow123
+      GF_INSTALL_PLUGINS: grafana-influxdb-flux-datasource
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./docs/footballflow_dashboard3.json:/var/lib/grafana/dashboards/footballflow_dashboard3.json
+    depends_on:
+      influxdb:
+        condition: service_healthy
+    restart: unless-stopped
