@@ -1,0 +1,29 @@
+# ==============================================================================
+# AWS Configuration Template
+# ==============================================================================
+# INSTRUCTIONS:
+# 1. Copy this file and rename the copy to "config.py"
+#    (config.py is already in .gitignore, so it will never be committed)
+# 2. Fill in your personal credentials in your local config.py — NOT here.
+# 3. Never paste real keys into this file (config.py.example), since this
+#    file IS meant to be committed to GitHub.
+# ==============================================================================
+
+AWS_ACCESS_KEY_ID = "YOUR_ACCESS_KEY_ID_HERE"
+AWS_SECRET_ACCESS_KEY = "YOUR_SECRET_ACCESS_KEY_HERE"
+AWS_REGION = "eu-west-1"  # Project default region: Europe (Ireland)
+
+# ==============================================================================
+# S3 Bucket Structure
+# ==============================================================================
+S3_BUCKET = "football-de-2026"  # Shared project bucket
+
+S3_BRONZE_PREFIX = "bronze/"
+S3_SILVER_PREFIX = "silver/"
+S3_STREAMING_PREFIX = "silver_streaming/"
+
+# ==============================================================================
+# Local Paths Configuration
+# ==============================================================================
+# Change this path to point to your local raw data directory
+LOCAL_DATA_FOLDER = r"D:\ITI LABS\Grad project\datasets\raw_data"  # Local path to raw data folder
