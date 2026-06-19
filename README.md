@@ -306,19 +306,65 @@ fact_game_events
 
 ### 5️⃣ Orchestration — Apache Airflow
 
-Apache Airflow schedules and monitors the entire batch pipeline. The DAG runs daily and follows this task sequence:
+Apache Airflow schedules and monitors the entire batch pipeline via a daily DAG with 9 sequential tasks:
 
+```text
+check_bronze_files
+    (S3KeySensor)
+          │
+          ▼
+run_silver_cleaning
+   (BashOperator)
+          │
+          ▼
+check_silver_files
+    (S3KeySensor)
+          │
+          ▼
+load_to_snowflake
+(SnowflakeOperator)
+          │
+          ▼
+dbt_run_staging
+   (BashOperator)
+          │
+          ▼
+dbt_snapshot_players
+   (BashOperator)
+          │
+          ▼
+dbt_run_dims_facts
+   (BashOperator)
+          │
+          ▼
+dbt_run_marts
+   (BashOperator)
+          │
+          ▼
+dbt_test
+   (BashOperator)
 ```
-s3_bronze_check  ──►  spark_silver_job  ──►  snowflake_load  ──►  dbt_run  ──►  notify
-    (Sensor)         (SparkSubmitOp)       (SnowflakeOp)      (BashOp)    (EmailOp)
-```
+
+| Task | What It Does |
+|---|---|
+| `check_bronze_files` | Waits until all 12 CSV files exist in S3 `bronze/` |
+| `run_silver_cleaning` | Runs `run_all_silver.py` — PySpark cleans all 12 tables |
+| `check_silver_files` | Confirms all 12 Parquet folders exist in S3 `silver/` |
+| `load_to_snowflake` | COPY INTO all 12 tables into `FOOTBALLFLOW.RAW` |
+| `dbt_run_staging` | RAW → STAGING (rename, cast, clean) |
+| `dbt_snapshot_players` | SCD Type 2 snapshot for player market values |
+| `dbt_run_dims_facts` | Builds Star Schema — dims + facts |
+| `dbt_run_marts` | Builds aggregated mart tables for Power BI |
+| `dbt_test` | Runs all data quality tests — fails pipeline if any test fails |
 
 **Start Airflow:**
-
 ```bash
-cd airflow/
-docker-compose up -d
-# Access UI at http://localhost:8080
+cd footballflow-airflow/
+cp .env.example .env        # fill in your credentials
+docker compose build
+docker compose up airflow-init
+docker compose up -d
+# Access UI at http://localhost:8080  (admin / admin)
 ```
 
 > The Kafka streaming pipeline is **not** managed by Airflow — it runs independently.
