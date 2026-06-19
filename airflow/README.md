@@ -104,6 +104,6 @@ Or create manually at Admin → Connections in the UI.
 
 ### 6. Trigger the DAG
 
-Toggle `footballflow_batch_pipeline` on and hit Trigger DAG.
+Toggle `footballflow_batch_pipeline` on and hit Trigger DAG
 
 
