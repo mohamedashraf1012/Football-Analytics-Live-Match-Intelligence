@@ -104,42 +104,6 @@ Or create manually at Admin → Connections in the UI.
 
 ### 6. Trigger the DAG
 
-Toggle `footballflow_batch_pipeline` on and hit ▶ Trigger DAG.
+Toggle `footballflow_batch_pipeline` on and hit Trigger DAG.
 
----
 
-## Useful commands
-
-```bash
-# Live scheduler logs
-docker compose logs -f airflow-scheduler
-
-# Shell into scheduler container
-docker exec -it footballflow_airflow_scheduler bash
-
-# Re-run a single task
-docker exec -it footballflow_airflow_scheduler \
-    airflow tasks run footballflow_batch_pipeline <task_id> <execution_date>
-
-# Parse DAG without executing
-docker exec -it footballflow_airflow_scheduler \
-    airflow dags test footballflow_batch_pipeline 2025-01-01
-
-# Full reset
-docker compose down --volumes --remove-orphans
-```
-
----
-
-## Troubleshooting
-
-| Problem | Fix |
-|---|---|
-| DAG not showing | Check scheduler logs for import errors |
-| `ModuleNotFoundError: utils` | Confirm `dags/utils/__init__.py` exists |
-| Spark fails — `JAVA_HOME not set` | `docker compose build --no-cache` |
-| S3 access denied | Check AWS keys in `.env` |
-| Snowflake connection fails | Account format should be `abc123.eu-west-1` — no `.snowflakecomputing.com` |
-| Docker out of memory | Allocate 6 GB+ RAM in Docker Desktop Settings |
-| Port 8080 in use | Change to `"8081:8080"` in `docker-compose.yml` |
-| dbt profiles not found | Check `DBT_PROFILES_DIR` in `.env` points to the folder containing `profiles.yml` |
