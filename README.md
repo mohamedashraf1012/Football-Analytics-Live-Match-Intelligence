@@ -550,6 +550,14 @@ FootballFlow/
 └── README.md
 ```
 
+## 👥 Our Team
+
+- Abdallah Ahmed
+- Ahmed Hassan
+- Mohamed Ashraf
+- Mohamed Gamal
+- Fatma Mahmoud
+- Mosaab Amer
 
 
 <div align="center">
