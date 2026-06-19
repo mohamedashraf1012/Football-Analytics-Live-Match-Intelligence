@@ -5,10 +5,6 @@ from pyspark.sql.types import *
 
 TABLE = "players"
 
-# ==================================================================================================================
-#  Schema — all columns read as StringType first.
-#  Reason: safe handling of any empty strings before casting.
-# ==================================================================================================================
 
 players_schema = StructType([
     StructField("player_id", IntegerType(), True),
