@@ -559,7 +559,6 @@ FootballFlow/
 - Fatma Mahmoud
 - Mosaab Amer
 
-
 <div align="center">
 
 **FootballFlow** — *Where data meets the beautiful game.*
